@@ -1,12 +1,16 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
+#include <SoftwareSerial.h>
+
+#define RX_PIN 4 // D2 (GPIO4)
+#define TX_PIN 0 // D3 (GPIO0)
+
 
 // Wi-Fi credentials
-const char* ssid = "Pablo";          // Replace with your Wi-Fi network name
-const char* password = "pablo123";  // Replace with your Wi-Fi password
+const char* ssid = "FGV";          // Replace with your Wi-Fi network name
+const char* password = "segav2298";  // Replace with your Wi-Fi password
 
 // MQTT broker details
-// MQTT Broker settings
 const char *mqtt_broker = "broker.emqx.io";  // EMQX broker endpoint
 const char *mqtt_topic = "eie/ucon/proy/luz";     // MQTT topic
 const char *mqtt_username = "emqx";  // MQTT username for authentication
@@ -16,15 +20,19 @@ const int mqtt_port = 1883;  // MQTT port (TCP)
 WiFiClient espClient;
 PubSubClient mqtt_client(espClient);
 
-void connectToWiFi();
+SoftwareSerial espSerial(RX_PIN, TX_PIN);
 
+// Function declarations
+void connectToWiFi();
 void connectToMQTTBroker();
 
 void setup() {
     Serial.begin(9600);
+    espSerial.begin(9600);       // Communication with Arduino
     connectToWiFi();
     mqtt_client.setServer(mqtt_broker, mqtt_port);
     connectToMQTTBroker();
+    Serial.println("ESP8266 ready");
 }
 
 void connectToWiFi() {
@@ -61,12 +69,14 @@ void loop() {
         connectToMQTTBroker();
     }
     mqtt_client.loop();
-    if (Serial.available()) {  // Read message from Arduino
-    String message = Serial.readStringUntil('\n');
-    message.trim();  // Remove any extra whitespace or newline characters
-
-    //Serial.println("Received from Arduino: " + message);  // Debugging
-    mqtt_client.publish(mqtt_topic, message.c_str());  // Publish to MQTT
-    Serial.println("Published to MQTT: " + message);
-  }
+    
+    // Check for data from Arduino on TX/RX interface
+    if (espSerial.available()) {
+        Serial.println("ESP8266 loop ready");
+        String data = espSerial.readStringUntil('\n');
+        Serial.println("Received from Arduino: " + data);  // Debugging
+        mqtt_client.publish(mqtt_topic, data.c_str());  // Publish to MQTT
+        Serial.println("Published to MQTT: " + data);
+    }
 }
+

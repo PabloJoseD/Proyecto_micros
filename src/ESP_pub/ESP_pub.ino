@@ -1,10 +1,11 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 
-// WiFi settings
-const char *ssid = "FGV";             // Replace with your WiFi name
-const char *password = "segav2298";   // Replace with your WiFi password
+// Wi-Fi credentials
+const char* ssid = "FGV";          // Replace with your Wi-Fi network name
+const char* password = "segav2298";  // Replace with your Wi-Fi password
 
+// MQTT broker details
 // MQTT Broker settings
 const char *mqtt_broker = "broker.emqx.io";  // EMQX broker endpoint
 const char *mqtt_topic = "eie/ucon/proy/luz";     // MQTT topic
@@ -19,13 +20,10 @@ void connectToWiFi();
 
 void connectToMQTTBroker();
 
-void mqttCallback(char *topic, byte *payload, unsigned int length);
-
 void setup() {
-    Serial.begin(115200);
+    Serial.begin(9600);
     connectToWiFi();
     mqtt_client.setServer(mqtt_broker, mqtt_port);
-    mqtt_client.setCallback(mqttCallback);
     connectToMQTTBroker();
 }
 
@@ -45,7 +43,7 @@ void connectToMQTTBroker() {
         Serial.printf("Connecting to MQTT Broker as %s.....\n", client_id.c_str());
         if (mqtt_client.connect(client_id.c_str())) {
             Serial.println("Connected to MQTT broker");
-            mqtt_client.subscribe(mqtt_topic);
+            //mqtt_client.subscribe(mqtt_topic);
             // Publish message upon successful connection
             mqtt_client.publish(mqtt_topic, "Hi EMQX I'm ESP8266 ^^");
         } else {
@@ -57,20 +55,18 @@ void connectToMQTTBroker() {
     }
 }
 
-void mqttCallback(char *topic, byte *payload, unsigned int length) {
-    Serial.print("Message received on topic: ");
-    Serial.println(topic);
-    Serial.print("Message:");
-    for (unsigned int i = 0; i < length; i++) {
-        Serial.print((char) payload[i]);
-    }
-    Serial.println();
-    Serial.println("-----------------------");
-}
 
 void loop() {
     if (!mqtt_client.connected()) {
         connectToMQTTBroker();
     }
     mqtt_client.loop();
+    if (Serial.available()) {  // Read message from Arduino
+    String message = Serial.readStringUntil('\n');
+    message.trim();  // Remove any extra whitespace or newline characters
+
+    //Serial.println("Received from Arduino: " + message);  // Debugging
+    mqtt_client.publish(mqtt_topic, message.c_str());  // Publish to MQTT
+    Serial.println("Published to MQTT: " + message);
+  }
 }

@@ -1,0 +1,17 @@
+import serial
+
+# Replace with your actual port names
+nano_port = serial.Serial('COM10', 9600)  # Arduino Nano BLE 33 Sense
+esp_port = serial.Serial('COM8', 9600)   # ESP8266
+
+print("Starting Serial Bridge")
+
+while True:
+    if nano_port.in_waiting > 0:
+        data = nano_port.readline().strip()
+        print(f"Forwarding from Nano: {data}")
+        esp_port.write(data + b'\n')
+
+    if esp_port.in_waiting > 0:
+        response = esp_port.readline().strip()
+        print(f"Received from ESP: {response}")

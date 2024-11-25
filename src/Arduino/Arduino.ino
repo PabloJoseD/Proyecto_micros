@@ -1,12 +1,18 @@
 void setup() {
-  Serial.begin(9600);    // Serial Monitor
-  Serial1.begin(9600);   // Communication with ESP8266 on Serial1 (TX1/RX1)
-  randomSeed(analogRead(0));  // Seed the random number generator
+  Serial.begin(9600);  // USB Serial communication
+  while (!Serial);     // Wait for the serial connection to establish
+
+  // Initialize Serial1 for ESP8266 communication
+  Serial1.begin(9600); // Match the baud rate with the ESP8266
+  Serial.println("Arduino ready");
 }
 
+int value = 0;
+
 void loop() {
-  int randomValue = random(0, 4);  // Generate a random value between 0 and 3
-  Serial1.println(randomValue);   // Send to ESP8266
-  Serial.println("Sent to ESP: " + String(randomValue));  // Debugging
-  delay(5000);  // Send data every 5 seconds
+  Serial1.println(value);  // Send value to the PC
+  value = (value + 1) % 4;  // Cycle through 0, 1, 2, 3
+  delay(3000);  // Wait for 1 second
 }
+
+
