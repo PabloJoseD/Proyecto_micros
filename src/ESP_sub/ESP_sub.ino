@@ -83,12 +83,15 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
     Serial.println("-----------------------");
 
     // Toggle logic for each command
-    if (message == "1") {
+    if (message == "0") {
         digitalWrite(Abanico, !digitalRead(Abanico)); // Toggle Abanico
         Serial.println(digitalRead(Abanico) ? "Abanico ON" : "Abanico OFF");
-    } else if (message == "2") {
+    } else if (message == "1") {
         digitalWrite(Bombillo, !digitalRead(Bombillo)); // Toggle Bombillo
         Serial.println(digitalRead(Bombillo) ? "Bombillo ON" : "Bombillo OFF");
+    } else if (message == "2") {
+      digitalWrite(Abanico, LOW);
+      digitalWrite(Bombillo, LOW);
     } else {
         Serial.println("Unknown command");
     }
