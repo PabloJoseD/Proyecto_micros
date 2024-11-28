@@ -2,8 +2,8 @@
 #include <PubSubClient.h>
 
 // WiFi settings
-const char *ssid = "FGV";             // Replace with your WiFi name
-const char *password = "segav2298";   // Replace with your WiFi password
+const char *ssid = "Pablo";             // Replace with your WiFi name
+const char *password = "pablo123";   // Replace with your WiFi password
 
 // MQTT Broker settings
 const char *mqtt_broker = "broker.emqx.io";  // EMQX broker endpoint
@@ -15,14 +15,26 @@ const int mqtt_port = 1883;  // MQTT port (TCP)
 WiFiClient espClient;
 PubSubClient mqtt_client(espClient);
 
+// Pin de los LEDs
+const int Abanico = D8; 
+const int Bombillo = D7;  
+
 void connectToWiFi();
-
 void connectToMQTTBroker();
-
 void mqttCallback(char *topic, byte *payload, unsigned int length);
 
 void setup() {
     Serial.begin(115200);
+    
+
+     // Configurar pines de los LEDS como salida
+    pinMode(Abanico, OUTPUT);
+    pinMode(Bombillo, OUTPUT);
+
+    // Iniciar con los LEDS apagados
+    digitalWrite(Abanico, LOW);
+    digitalWrite(Bombillo, LOW);
+
     connectToWiFi();
     mqtt_client.setServer(mqtt_broker, mqtt_port);
     mqtt_client.setCallback(mqttCallback);
@@ -61,16 +73,32 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
     Serial.print("Message received on topic: ");
     Serial.println(topic);
     Serial.print("Message:");
+
+    String message = "";
     for (unsigned int i = 0; i < length; i++) {
-        Serial.print((char) payload[i]);
+        message += (char)payload[i];
     }
-    Serial.println();
+    message.trim(); // Eliminar espacios y caracteres extra al inicio o final
+    Serial.println(message);
     Serial.println("-----------------------");
+
+    // Toggle logic for each command
+    if (message == "1") {
+        digitalWrite(Abanico, !digitalRead(Abanico)); // Toggle Abanico
+        Serial.println(digitalRead(Abanico) ? "Abanico ON" : "Abanico OFF");
+    } else if (message == "2") {
+        digitalWrite(Bombillo, !digitalRead(Bombillo)); // Toggle Bombillo
+        Serial.println(digitalRead(Bombillo) ? "Bombillo ON" : "Bombillo OFF");
+    } else {
+        Serial.println("Unknown command");
+    }
 }
+
 
 void loop() {
     if (!mqtt_client.connected()) {
         connectToMQTTBroker();
     }
     mqtt_client.loop();
+
 }
